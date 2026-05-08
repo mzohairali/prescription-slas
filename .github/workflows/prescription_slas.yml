@@ -1,0 +1,59 @@
+name: Prescription SLAs
+
+on:
+  schedule:
+    - cron: "0 4 * * *"   # send_report: 4:00 AM UTC = 8:00 AM Dubai
+    - cron: "0 20 * * *"  # health_check: 8:00 PM UTC = midnight Dubai
+  workflow_dispatch:
+
+jobs:
+  send_report:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 4 * * *'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run main report
+        run: python main.py
+        env:
+          REDASH_API_KEY_923: ${{ secrets.REDASH_API_KEY_923 }}
+          REDASH_API_KEY_924: ${{ secrets.REDASH_API_KEY_924 }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+
+  health_check:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * *'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run health check
+        run: python health_check.py
+        env:
+          REDASH_API_KEY_923: ${{ secrets.REDASH_API_KEY_923 }}
+          REDASH_API_KEY_924: ${{ secrets.REDASH_API_KEY_924 }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
